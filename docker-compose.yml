@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  autocoin:
+    build: .
+    container_name: autocoin
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+    networks:
+      - autocoin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+networks:
+  autocoin-network:
+    driver: bridge
+
+volumes:
+  logs:
+  data:
+  config:
