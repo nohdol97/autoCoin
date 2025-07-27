@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  autocoin_testnet:
+    build: .
+    container_name: autocoin_testnet
+    restart: unless-stopped
+    env_file:
+      - .env.testnet
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+      - ENV=testnet
+    networks:
+      - autocoin-testnet-network
+    ports:
+      - "8081:8080"  # Prometheus metrics on different port
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 2m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  autocoin-testnet-network:
+    driver: bridge
+
+volumes:
+  logs:
+  data:
+  config:
