@@ -1,0 +1,86 @@
+groups:
+  - name: autocoin_alerts
+    interval: 30s
+    rules:
+      # System Alerts
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% (current value: {{ $value }})"
+      
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% (current value: {{ $value }})"
+      
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.2
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is below 20% (current value: {{ $value }})"
+      
+      # Application Alerts
+      - alert: AutoCoinDown
+        expr: up{job="autocoin"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AutoCoin is down"
+          description: "AutoCoin has been down for more than 2 minutes"
+      
+      - alert: HighErrorRate
+        expr: rate(autocoin_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate"
+          description: "Error rate is above 0.1 per second (current value: {{ $value }})"
+      
+      - alert: TradingEngineNotRunning
+        expr: autocoin_trading_engine_running == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Trading engine is not running"
+          description: "Trading engine has been stopped for more than 10 minutes"
+      
+      - alert: APIRateLimitNear
+        expr: autocoin_api_rate_limit_remaining / autocoin_api_rate_limit_total < 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API rate limit near"
+          description: "API rate limit usage is above 80% (remaining: {{ $value }})"
+      
+      - alert: NoTradesExecuted
+        expr: increase(autocoin_trades_total[1h]) == 0
+        for: 2h
+        labels:
+          severity: info
+        annotations:
+          summary: "No trades executed"
+          description: "No trades have been executed in the last 2 hours"
+      
+      - alert: LargeLoss
+        expr: autocoin_position_pnl < -100
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Large loss detected"
+          description: "Current position has a loss greater than $100 (current: ${{ $value }})"

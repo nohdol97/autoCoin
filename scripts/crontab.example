@@ -1,0 +1,23 @@
+# AutoCoin Crontab 설정 예시
+# 이 파일의 내용을 crontab -e 로 추가하세요
+
+# 일일 백업 (매일 새벽 2시)
+0 2 * * * /path/to/autoCoin/scripts/automated_backup.sh >> /path/to/autoCoin/logs/cron.log 2>&1
+
+# 헬스 체크 (10분마다)
+*/10 * * * * /path/to/autoCoin/scripts/health_check.sh >> /path/to/autoCoin/logs/health_check.log 2>&1
+
+# 일일 리포트 (매일 오전 9시)
+0 9 * * * docker exec autocoin_prod python -c "from src.monitoring.metrics_collector import MetricsCollector; import asyncio; mc = MetricsCollector(); print(asyncio.run(mc.get_daily_report()))" | mail -s "AutoCoin Daily Report" your_email@example.com
+
+# 주간 리포트 (매주 월요일 오전 9시)
+0 9 * * 1 docker exec autocoin_prod python -c "from src.monitoring.metrics_collector import MetricsCollector; import asyncio; mc = MetricsCollector(); print(asyncio.run(mc.get_weekly_report()))" | mail -s "AutoCoin Weekly Report" your_email@example.com
+
+# 로그 로테이션 (매일 자정)
+0 0 * * * find /path/to/autoCoin/logs -name "*.log" -mtime +30 -delete
+
+# 디스크 사용량 체크 (매일 오후 6시)
+0 18 * * * df -h | grep -E "8[0-9]%|9[0-9]%|100%" && echo "WARNING: Disk usage high on AutoCoin server" | mail -s "AutoCoin Disk Alert" your_email@example.com
+
+# Docker 컨테이너 재시작 (매주 일요일 새벽 3시 - 선택사항)
+# 0 3 * * 0 cd /path/to/autoCoin && docker-compose restart

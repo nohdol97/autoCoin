@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  autocoin:
+    build: .
+    container_name: autocoin_prod
+    restart: always
+    env_file:
+      - ./config/production.env
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./backups:/app/backups
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+      - ENV=production
+    networks:
+      - autocoin-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: autocoin_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - autocoin-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: autocoin_grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - autocoin-network
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+networks:
+  autocoin-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  logs:
+  data:
+  config:
+  backups:

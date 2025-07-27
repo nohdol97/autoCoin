@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: 'autocoin'
+    static_configs:
+      - targets: ['autocoin:8080']
+    metrics_path: '/metrics'
+    
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+      
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
