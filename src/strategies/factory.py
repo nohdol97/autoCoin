@@ -185,3 +185,7 @@ class StrategyManager:
             summary[name] = strategy.get_performance_stats()
             
         return summary
+        
+    def get_available_strategies(self) -> List[str]:
+        """Get list of available strategies"""
+        return StrategyFactory.get_available_strategies()
